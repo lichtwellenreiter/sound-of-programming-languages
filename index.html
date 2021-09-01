@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+
+<h1>The Sound of Programming Languages</h1>
+
+<h5>Add your Code snippet or any text </h5>
+<textarea cols="80" rows="20" id="inputtext"></textarea></br>
+<button id="playbutton">Play</button>
+
+<div id="output"></div>
+
+
+<script>
+
+    /**
+     * https://www.the-art-of-web.com/javascript/creating-sounds/
+     * http://marcgg.com/blog/2016/11/01/javascript-audio/
+     */
+
+
+
+    function crossSum(numberinput) {
+
+        let input = `${numberinput}`
+        let sum = 0
+
+        for (let i = 0; i < input.length; i++) {
+
+            sum += parseInt(input.charAt(i))
+
+        }
+
+        return sum
+
+    }
+
+    //if you have another AudioContext class use that one, as some browsers have a limit
+    let audioCtx = new (window.AudioContext || window.webkitAudioContext || window.audioContext || window.audioContext);
+
+    //All arguments are optional:
+
+    //duration of the tone in milliseconds. Default is 500
+    //frequency of the tone in hertz. default is 440
+    //volume of the tone. Default is 1, off is 0.
+    //type of tone. Possible values are sine, square, sawtooth, triangle, and custom. Default is sine.
+    //callback to use on end of tone
+    function beep(duration, frequency, volume, type, callback) {
+        let oscillator = audioCtx.createOscillator()
+        let gainNode = audioCtx.createGain()
+
+        oscillator.connect(gainNode)
+        gainNode.connect(audioCtx.destination)
+
+        if (volume) {
+            gainNode.gain.value = volume
+        }
+        if (frequency) {
+            oscillator.frequency.value = frequency
+        }
+        if (type) {
+            oscillator.type = type
+        }
+        if (callback) {
+            oscillator.onended = callback
+        }
+
+        oscillator.start(audioCtx.currentTime)
+        oscillator.stop(audioCtx.currentTime + ((duration || 500) / 1000))
+    }
+
+
+    function playSound(text, callback) {
+
+        for (let j = 0; j < text.length; j++) {
+
+            let val = text.charCodeAt(j)
+            let cs = crossSum(val)
+
+            let d = document.getElementById("output")
+
+            d.innerText += text.charAt(j) + ": " + val + " | " + cs + "\n"
+
+
+            beep(cs * 1000, val + 400, 1, 0, null)
+        }
+        callback()
+    }
+
+    document.getElementById("playbutton").addEventListener('click', () => {
+
+        document.getElementById("playbutton").disabled = true
+
+        document.getElementById("output").innerText = ""
+        playSound(document.getElementById("inputtext").value, ()=>{ document.getElementById("playbutton").disabled = false })
+    })
+
+
+</script>
+
+</body>
+</html>
