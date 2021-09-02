@@ -3,18 +3,63 @@
 <head>
     <meta charset="UTF-8">
     <title>Title</title>
+
+    <style>
+        .sheet{
+            width:100%
+        }
+
+        .line{
+            width:100%;
+            height: 10px;
+            border-bottom: 1px solid black;
+
+        }
+
+    </style>
+
 </head>
 <body>
 
 <h1>The Sound of Programming Languages</h1>
 
 <h5>Add your Code snippet or any text </h5>
-<textarea cols="80" rows="20" id="inputtext"></textarea></br>
+<label for="inputtext"></label><textarea cols="80" rows="20" id="inputtext"></textarea><br/><br/>
+
+<span>
+<label><input type="radio" name="wave" value="sine" onclick="setWaveType(this.value);"> sine</label><br>
+<label><input type="radio" name="wave" value="square" checked="" onclick="setWaveType(this.value);"> square</label><br>
+<label><input type="radio" name="wave" value="sawtooth" onclick="setWaveType(this.value);"> sawtooth</label><br>
+<label><input type="radio" name="wave" value="triangle" onclick="setWaveType(this.value);"> triangle</label>
+</span>
+
+<br/><br/>
+
 <button id="playbutton">Play</button>
-
+<br/><br/>
 <div id="output"></div>
+<br/><br/>
+
+<div class="sheet">
 
 
+    <div class="line line-f2"></div>
+    <div class="line-n line-e2"></div>
+    <div class="line line-d1"></div>
+    <div class="line-n line-c1"></div>
+    <div class="line line-b1"></div>
+    <div class="line-n line-a1"></div>
+    <div class="line line-g1"></div>
+    <div class="line-n line-f1"></div>
+    <div class="line line-e1"></div>
+
+
+</div>
+
+
+<script src="SoundPlayer.js"></script>
+<script src="NoteValues.js"></script>
+<script src="Megalovenia.js"></script>
 <script>
 
     /**
@@ -23,80 +68,83 @@
      */
 
 
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    const audio = new AudioContext();
+    const playbutton = document.getElementById("playbutton")
+    const outputtext = document.getElementById("output")
+    const inputtext = document.getElementById("inputtext")
 
-    function crossSum(numberinput) {
+    let wave = "sine"
 
-        let input = `${numberinput}`
-        let sum = 0
+    const playNote = (frequency, start, stop, wave) => {
+        // play note according to data-frequency attribute
+        (new SoundPlayer(audio)).play(frequency, start, wave).stop(stop);
+        //e.cancelBubble = true;
+    };
 
-        for (let i = 0; i < input.length; i++) {
-
-            sum += parseInt(input.charAt(i))
-
-        }
-
-        return sum
-
-    }
-
-    //if you have another AudioContext class use that one, as some browsers have a limit
-    let audioCtx = new (window.AudioContext || window.webkitAudioContext || window.audioContext || window.audioContext);
-
-    //All arguments are optional:
-
-    //duration of the tone in milliseconds. Default is 500
-    //frequency of the tone in hertz. default is 440
-    //volume of the tone. Default is 1, off is 0.
-    //type of tone. Possible values are sine, square, sawtooth, triangle, and custom. Default is sine.
-    //callback to use on end of tone
-    function beep(duration, frequency, volume, type, callback) {
-        let oscillator = audioCtx.createOscillator()
-        let gainNode = audioCtx.createGain()
-
-        oscillator.connect(gainNode)
-        gainNode.connect(audioCtx.destination)
-
-        if (volume) {
-            gainNode.gain.value = volume
-        }
-        if (frequency) {
-            oscillator.frequency.value = frequency
-        }
-        if (type) {
-            oscillator.type = type
-        }
-        if (callback) {
-            oscillator.onended = callback
-        }
-
-        oscillator.start(audioCtx.currentTime)
-        oscillator.stop(audioCtx.currentTime + ((duration || 500) / 1000))
+    const setWaveType = (waveType) => {
+        wave = waveType
     }
 
 
-    function playSound(text, callback) {
+    const calcNoteValue = (notetext) => {
 
-        for (let j = 0; j < text.length; j++) {
+        const possibleNotes = ["C", "D", "E", "F", "G", "A", "B", "c", "d", "e", "f", "g", "a", "b"]
 
-            let val = text.charCodeAt(j)
-            let cs = crossSum(val)
-
-            let d = document.getElementById("output")
-
-            d.innerText += text.charAt(j) + ": " + val + " | " + cs + "\n"
+        let halftone = ""
+        let note = "C"
+        let octave = 4
 
 
-            beep(cs * 1000, val + 400, 1, 0, null)
+        for (let i = 0; i < notetext.length; i++) {
+
+            if (possibleNotes.includes(notetext.charAt(i).toUpperCase())) {
+                note = notetext.charAt(i)
+                console.log(note)
+            }
         }
-        callback()
+
+        return note.toUpperCase() + halftone + octave
     }
 
-    document.getElementById("playbutton").addEventListener('click', () => {
 
-        document.getElementById("playbutton").disabled = true
+    // this is base 100 Bpm
+    const tonelength = {
+        "32": 0.075,
+        "16": 0.15,
+        "8": 0.25,
+        "4": 0.3,
+        "2": 0.35,
+        "1": 0.4,
+    }
 
-        document.getElementById("output").innerText = ""
-        playSound(document.getElementById("inputtext").value, ()=>{ document.getElementById("playbutton").disabled = false })
+
+    const playNoteNew = (frequency, start, stop) => {
+
+        (new SoundPlayer(audio)).play(noteValues["D4"], 0.5, wave, start).stop(stop);
+    }
+
+
+    playbutton.addEventListener('click', () => {
+
+        let start = 0.0;
+        let stop = 0.0;
+
+
+        for (let i = 0; i < megalovenia.length; i++) {
+
+            let note = megalovenia[i].split(',');
+
+            let nLength = note[1];
+            let nFreq = note[0];
+            let noteLength = tonelength[nLength] * .9;
+            let noteFrequency = noteValues[nFreq]
+
+            stop = start + noteLength;
+            (new SoundPlayer(audio)).play(noteFrequency, 0.5, wave, start).stop(stop);
+            start = stop;
+        }
+
     })
 
 
